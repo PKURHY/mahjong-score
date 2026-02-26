@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <title>麻将积分</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#101a2d;
+      --card2:#0f172a;
+      --text:#e5e7eb;
+      --muted:#9ca3af;
+      --line:#22304a;
+      --accent:#38bdf8;
+      --danger:#fb7185;
+      --ok:#34d399;
+      --btn:#111827;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+      --pad: 14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: -apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC",Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background: radial-gradient(1200px 800px at 20% 0%, #122044 0%, var(--bg) 45%, #070b14 100%);
+      color:var(--text);
+    }
+    header{
+      position:sticky; top:0; z-index:10;
+      padding: 14px 14px calc(12px + env(safe-area-inset-top));
+      background: rgba(11,18,32,.78);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    header .row{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+    h1{font-size:18px; margin:0; letter-spacing:.5px;}
+    .sub{font-size:12px; color:var(--muted); margin-top:4px;}
+    main{padding: 14px 14px calc(24px + env(safe-area-inset-bottom)); max-width: 820px; margin:0 auto;}
+    .grid{display:grid; grid-template-columns: 1fr; gap:12px;}
+    @media(min-width: 860px){ .grid{grid-template-columns: 1fr 1fr;} }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding: 12px var(--pad);
+      background: rgba(255,255,255,.03);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .card .bd{ padding: var(--pad); }
+    .title{font-size:14px; color:var(--text); margin:0;}
+    .muted{color:var(--muted); font-size:12px;}
+    .btns{display:flex; flex-wrap:wrap; gap:8px;}
+    button{
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(17,24,39,.78);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button.primary{ background: rgba(56,189,248,.18); border-color: rgba(56,189,248,.45); }
+    button.danger{ background: rgba(251,113,133,.14); border-color: rgba(251,113,133,.45); }
+    button.ghost{ background: transparent; }
+    button:active{ transform: scale(.98); }
+
+    .table{width:100%; border-collapse: collapse;}
+    .table th,.table td{
+      padding: 10px 8px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      font-size: 13px;
+      vertical-align:middle;
+    }
+    .table th{color: var(--muted); font-weight: 600; text-align:left;}
+    .pill{
+      display:inline-flex; align-items:center; gap:6px;
+      border: 1px solid rgba(255,255,255,.10);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--text);
+      background: rgba(255,255,255,.03);
+      white-space:nowrap;
+    }
+    .pos{ color: var(--ok); }
+    .neg{ color: var(--danger); }
+
+    .form{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .form .full{ grid-column: 1 / -1; }
+    label{display:block; font-size:12px; color: var(--muted); margin: 0 0 6px;}
+    input, select, textarea{
+      width:100%;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(15,23,42,.65);
+      color: var(--text);
+      outline:none;
+    }
+    textarea{min-height: 40px; resize: vertical;}
+    .hint{font-size:12px; color:var(--muted); margin-top:8px; line-height:1.45}
+    .row2{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+    .right{margin-left:auto;}
+    .small{font-size:12px;}
+    .mono{font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;}
+    .sep{height:1px; background: rgba(255,255,255,.06); margin: 10px 0;}
+    .toast{
+      position: fixed;
+      left: 50%; transform: translateX(-50%);
+      bottom: calc(18px + env(safe-area-inset-bottom));
+      background: rgba(17,24,39,.92);
+      border: 1px solid rgba(255,255,255,.12);
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--text);
+      box-shadow: var(--shadow);
+      opacity:0; pointer-events:none;
+      transition: opacity .18s ease;
+      max-width: 92vw;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .toast.show{opacity:1;}
+    .footer-note{font-size:12px; color: var(--muted); padding: 10px 2px 0;}
+    a{color: var(--accent); text-decoration:none;}
+  </style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <div>
+      <h1>麻将积分</h1>
+      <div class="sub">自摸/点炮快速记分 · 自动保存 · 支持导出导入</div>
+    </div>
+    <div class="btns">
+      <button class="ghost" id="btnInstall" style="display:none;">添加到主屏幕</button>
+      <button class="ghost" id="btnExport">导出</button>
+      <button class="ghost" id="btnImport">导入</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="grid">
+    <section class="card">
+      <div class="hd">
+        <p class="title">玩家与总分</p>
+        <div class="btns">
+          <button id="btnRename" class="ghost">改名字/人数</button>
+          <button id="btnResetScores" class="danger">清空总分</button>
+        </div>
+      </div>
+      <div class="bd">
+        <table class="table" id="scoreTable"></table>
+        <div class="footer-note">提示：分数正负代表最终结算应收/应付。</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="hd">
+        <p class="title">新增一局</p>
+        <div class="pill" id="roundPill">第 1 局</div>
+      </div>
+      <div class="bd">
+        <div class="form">
+          <div>
+            <label>赢家</label>
+            <select id="winner"></select>
+          </div>
+          <div>
+            <label>类型</label>
+            <select id="type">
+              <option value="zimo">自摸（赢家从每个对手收分）</option>
+              <option value="dianpao">点炮（放炮者付给赢家）</option>
+            </select>
+          </div>
+          <div>
+            <label>分数</label>
+            <input id="points" type="number" inputmode="numeric" placeholder="例如 10 或 20" />
+          </div>
+          <div>
+            <label>放炮者（点炮才需要）</label>
+            <select id="loser"></select>
+          </div>
+          <div class="full">
+            <label>备注（可选）</label>
+            <input id="note" type="text" placeholder="例如：清一色 / 七对 / 杠上花…" />
+          </div>
+          <div class="full row2">
+            <button id="btnAdd" class="primary">记这一局</button>
+            <button id="btnUndo" class="ghost">撤销上一局</button>
+            <span class="right muted small">会自动保存到本机</span>
+          </div>
+        </div>
+
+        <div class="hint">
+          规则：<span class="pill">自摸</span> 赢家 +P×(n-1)，其余每人 −P。<br/>
+          <span class="pill">点炮</span> 赢家 +P，放炮者 −P，其他人 0。
+        </div>
+      </div>
+    </section>
+
+    <section class="card" style="grid-column: 1 / -1;">
+      <div class="hd">
+        <p class="title">历史记录</p>
+        <div class="btns">
+          <button id="btnClearHistory" class="danger">清空记录</button>
+        </div>
+      </div>
+      <div class="bd">
+        <div id="history"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = "mahjong_score_app_v1";
+const defaultState = () => ({
+  players: ["东", "南", "西", "北"],
+  scores: [0,0,0,0],
+  rounds: []
+});
+let state = loadState();
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultState();
+    const obj = JSON.parse(raw);
+    if(!obj.players || !Array.isArray(obj.players)) return defaultState();
+    if(!obj.scores || !Array.isArray(obj.scores)) obj.scores = obj.players.map(()=>0);
+    if(!obj.rounds || !Array.isArray(obj.rounds)) obj.rounds = [];
+    if(obj.scores.length !== obj.players.length){
+      obj.scores = obj.players.map((_,i)=> Number(obj.scores[i]||0));
+    }
+    return obj;
+  }catch(e){
+    return defaultState();
+  }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+const $ = (id)=>document.getElementById(id);
+
+function toast(msg){
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 1600);
+}
+function fmt(n){
+  const v = Number(n)||0;
+  const sign = v>0 ? "+" : "";
+  return sign + v;
+}
+function nowStr(ts){
+  const d = new Date(ts);
+  const pad = (x)=>String(x).padStart(2,"0");
+  return `${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, (c)=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+
+function renderAll(){
+  renderScores();
+  renderSelects();
+  renderHistory();
+  $("roundPill").textContent = `第 ${state.rounds.length + 1} 局`;
+}
+function renderScores(){
+  const tbl = $("scoreTable");
+  const rows = [];
+  rows.push(`<thead><tr><th>玩家</th><th>总分</th></tr></thead>`);
+  rows.push("<tbody>");
+  state.players.forEach((name,i)=>{
+    const s = Number(state.scores[i]||0);
+    const cls = s>0 ? "pos" : (s<0 ? "neg" : "");
+    rows.push(`<tr><td>${escapeHtml(name)}</td><td class="${cls} mono">${fmt(s)}</td></tr>`);
+  });
+  rows.push("</tbody>");
+  tbl.innerHTML = rows.join("");
+}
+function renderSelects(){
+  const winner = $("winner");
+  const loser = $("loser");
+  const options = state.players.map((p,i)=>`<option value="${i}">${escapeHtml(p)}</option>`).join("");
+  winner.innerHTML = options;
+  loser.innerHTML = `<option value="">（无）</option>` + options;
+
+  const w = Number(winner.value||0);
+  if($("type").value === "dianpao"){
+    if(loser.value === "" || Number(loser.value) === w){
+      const cand = state.players.map((_,i)=>i).filter(i=>i!==w);
+      loser.value = String(cand[0] ?? "");
+    }
+  }else{
+    loser.value = "";
+  }
+}
+function renderHistory(){
+  const box = $("history");
+  if(state.rounds.length === 0){
+    box.innerHTML = `<div class="muted">暂无记录。</div>`;
+    return;
+  }
+  const items = state.rounds.slice().reverse().map((r,idx)=>{
+    const wName = state.players[r.winner] ?? "?";
+    const typeLabel = r.type === "zimo" ? "自摸" : "点炮";
+    let detail = "";
+    if(r.type === "zimo"){
+      detail = `${escapeHtml(wName)} 自摸 ${escapeHtml(String(r.points))}（每家）`;
+    }else{
+      const lName = state.players[r.loser] ?? "?";
+      detail = `${escapeHtml(wName)} 胡牌 ${escapeHtml(String(r.points))}，${escapeHtml(lName)} 点炮`;
+    }
+    const note = r.note ? ` · ${escapeHtml(r.note)}` : "";
+    return `
+      <div style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,.06);">
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <span class="pill">${typeLabel}</span>
+          <span class="muted small">${nowStr(r.ts)}</span>
+          <span style="margin-left:auto" class="muted small">#${state.rounds.length - idx}</span>
+        </div>
+        <div style="margin-top:6px; font-size:13px;">${detail}<span class="muted">${note}</span></div>
+      </div>`;
+  }).join("");
+  box.innerHTML = items;
+}
+
+function applyRound(r){
+  const n = state.players.length;
+  const P = Number(r.points);
+  if(!Number.isFinite(P) || P<=0) throw new Error("分数必须是正数");
+  const w = Number(r.winner);
+  if(!(w>=0 && w<n)) throw new Error("赢家无效");
+
+  if(r.type === "zimo"){
+    for(let i=0;i<n;i++){
+      if(i===w) continue;
+      state.scores[i] -= P;
+      state.scores[w] += P;
+    }
+  }else if(r.type === "dianpao"){
+    const l = Number(r.loser);
+    if(!(l>=0 && l<n)) throw new Error("放炮者无效");
+    if(l===w) throw new Error("放炮者不能等于赢家");
+    state.scores[l] -= P;
+    state.scores[w] += P;
+  }else{
+    throw new Error("类型无效");
+  }
+}
+function rollbackRound(r){
+  const n = state.players.length;
+  const P = Number(r.points);
+  const w = Number(r.winner);
+  if(r.type === "zimo"){
+    for(let i=0;i<n;i++){
+      if(i===w) continue;
+      state.scores[i] += P;
+      state.scores[w] -= P;
+    }
+  }else if(r.type === "dianpao"){
+    const l = Number(r.loser);
+    state.scores[l] += P;
+    state.scores[w] -= P;
+  }
+}
+
+$("type").addEventListener("change", ()=>renderSelects());
+$("winner").addEventListener("change", ()=>renderSelects());
+
+$("btnAdd").addEventListener("click", ()=>{
+  try{
+    const type = $("type").value;
+    const winner = Number($("winner").value);
+    const points = Number($("points").value);
+    const loserRaw = $("loser").value;
+    const loser = loserRaw === "" ? null : Number(loserRaw);
+    const note = $("note").value.trim();
+
+    const r = { ts: Date.now(), type, winner, loser, points, note };
+    if(type==="dianpao" && (loser===null || Number.isNaN(loser))) throw new Error("点炮必须选择放炮者");
+    if(type==="zimo") r.loser = null;
+
+    applyRound(r);
+    state.rounds.push(r);
+    saveState();
+    $("points").value = "";
+    $("note").value = "";
+    if(type==="zimo") $("loser").value = "";
+    toast("已记录");
+    renderAll();
+  }catch(e){
+    toast(e.message || "记录失败");
+  }
+});
+
+$("btnUndo").addEventListener("click", ()=>{
+  if(state.rounds.length===0){ toast("没有可撤销的记录"); return; }
+  const r = state.rounds.pop();
+  rollbackRound(r);
+  saveState();
+  toast("已撤销上一局");
+  renderAll();
+});
+
+$("btnClearHistory").addEventListener("click", ()=>{
+  if(!confirm("确认清空所有记录吗？（总分也会被重置）")) return;
+  state = defaultState();
+  saveState();
+  toast("已清空");
+  renderAll();
+});
+
+$("btnResetScores").addEventListener("click", ()=>{
+  if(!confirm("确认清空总分吗？（保留历史记录不变）")) return;
+  state.scores = state.players.map(()=>0);
+  const rounds = state.rounds.slice();
+  state.rounds = [];
+  rounds.forEach(r=>{ applyRound(r); state.rounds.push(r); });
+  saveState();
+  toast("总分已重置并重算");
+  renderAll();
+});
+
+$("btnRename").addEventListener("click", ()=>{
+  const raw = prompt(
+`输入玩家名字（用逗号分隔），支持 2–6 人。\n例如：东,南,西,北\n当前：${state.players.join(",")}`,
+    state.players.join(",")
+  );
+  if(raw===null) return;
+  const names = raw.split(",").map(s=>s.trim()).filter(Boolean);
+  if(names.length < 2 || names.length > 6){ toast("人数必须是 2–6 人"); return; }
+  if(state.rounds.length>0){
+    if(!confirm("更改人数/名字会清空历史与总分，是否继续？")) return;
+  }
+  state.players = names;
+  state.scores = names.map(()=>0);
+  state.rounds = [];
+  saveState();
+  toast("已更新玩家设置");
+  renderAll();
+});
+
+$("btnExport").addEventListener("click", async ()=>{
+  try{
+    const data = JSON.stringify(state, null, 2);
+    if(navigator.clipboard){
+      await navigator.clipboard.writeText(data);
+      toast("已复制到剪贴板（JSON）");
+    }else{
+      downloadText(data, "mahjong_score_export.json");
+      toast("已下载导出文件");
+    }
+  }catch(e){ toast("导出失败"); }
+});
+
+$("btnImport").addEventListener("click", async ()=>{
+  const raw = prompt("粘贴导出的 JSON 内容：");
+  if(raw===null) return;
+  try{
+    const obj = JSON.parse(raw);
+    if(!obj.players || !Array.isArray(obj.players)) throw new Error("格式不对：缺少 players");
+    if(!obj.scores || !Array.isArray(obj.scores)) obj.scores = obj.players.map(()=>0);
+    if(!obj.rounds || !Array.isArray(obj.rounds)) obj.rounds = [];
+    if(obj.players.length<2 || obj.players.length>6) throw new Error("人数必须是 2–6");
+    if(obj.scores.length !== obj.players.length) obj.scores = obj.players.map(()=>0);
+
+    state = obj;
+    state.scores = state.players.map(()=>0);
+    const rounds = state.rounds.slice();
+    state.rounds = [];
+    rounds.forEach(r=>{ applyRound(r); state.rounds.push(r); });
+    saveState();
+    toast("导入成功");
+    renderAll();
+  }catch(e){ toast(e.message || "导入失败"); }
+});
+
+function downloadText(text, filename){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], {type:"application/json"}));
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+// Service worker (offline) via Blob
+(async function registerSW(){
+  if(!("serviceWorker" in navigator)) return;
+  const swCode = `
+    const CACHE = "mahjong-score-cache-v1";
+    self.addEventListener("install", (e)=>{
+      e.waitUntil((async()=>{
+        const cache = await caches.open(CACHE);
+        await cache.addAll(["./"]);
+        self.skipWaiting();
+      })());
+    });
+    self.addEventListener("activate", (e)=>{
+      e.waitUntil((async()=>{
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k=>k===CACHE?null:caches.delete(k)));
+        self.clients.claim();
+      })());
+    });
+    self.addEventListener("fetch", (e)=>{
+      e.respondWith((async()=>{
+        const req = e.request;
+        const cache = await caches.open(CACHE);
+        const cached = await cache.match(req);
+        if(cached) return cached;
+        try{
+          const fresh = await fetch(req);
+          if(req.method==="GET" && fresh && fresh.status===200){
+            cache.put(req, fresh.clone());
+          }
+          return fresh;
+        }catch(err){
+          return cached || new Response("离线且无缓存", {status: 503});
+        }
+      })());
+    });
+  `;
+  const blob = new Blob([swCode], {type:"text/javascript"});
+  const swUrl = URL.createObjectURL(blob);
+  try{ await navigator.serviceWorker.register(swUrl); }catch(e){}
+})();
+
+// Install prompt
+let deferredPrompt = null;
+window.addEventListener("beforeinstallprompt", (e)=>{
+  e.preventDefault();
+  deferredPrompt = e;
+  $("btnInstall").style.display = "inline-flex";
+});
+$("btnInstall").addEventListener("click", async ()=>{
+  if(!deferredPrompt){
+    toast("如未出现弹窗：用浏览器分享菜单选择“添加到主屏幕”");
+    return;
+  }
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  $("btnInstall").style.display = "none";
+});
+
+renderAll();
+</script>
+</body>
+</html>
